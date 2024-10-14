@@ -1,0 +1,3 @@
+/opt/RM_tasks/XJTU-RMV-Task04/build/CMakeFiles/Task04.dir
+/opt/RM_tasks/XJTU-RMV-Task04/build/CMakeFiles/edit_cache.dir
+/opt/RM_tasks/XJTU-RMV-Task04/build/CMakeFiles/rebuild_cache.dir
