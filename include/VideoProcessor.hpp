@@ -134,12 +134,12 @@ namespace Video
             Mat result = armorPlate.clone();
             result.setTo(Scalar(0, 0, 0), mask);  // 将亮度高的部分设置为黑色
 
-            namedWindow("ArmorID", WINDOW_FREERATIO);
-            imshow("ArmorID", result);
-            if (waitKey(3000000) == 27)  // 按下 'Esc' 键退出
-            {
+            // namedWindow("ArmorID", WINDOW_FREERATIO);
+            // imshow("ArmorID", result);
+            // if (waitKey(3000000) == 27)  // 按下 'Esc' 键退出
+            // {
                
-            }
+            // }
 
             cvtColor(result, grayArmorPlate, COLOR_BGR2GRAY); // 转换为灰度图
             resize(grayArmorPlate, resizedArmorPlate, cv::Size(IMAGE_COLS, IMAGE_ROWS)); // 调整为28x28

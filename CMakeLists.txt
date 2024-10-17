@@ -19,6 +19,6 @@ add_executable(Task04 main.cpp ${ALL_SRCS})
 target_link_libraries(Task04 
     ${OpenCV_LIBS}
     ${TORCH_LIBRARIES}
-
+    
 )
 
