@@ -144,7 +144,7 @@ int main()
  
         namedWindow("video", WINDOW_FREERATIO);
         imshow("video", frame);
-        if (waitKey(3000000) == 27)  // 按下 'Esc' 键退出
+        if (waitKey(50) == 27)  // 按下 'Esc' 键退出
         {
             continue;
         }
