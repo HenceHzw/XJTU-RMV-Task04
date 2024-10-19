@@ -7,9 +7,6 @@ int main() {
     CameraControl camera;
     Video::DigitalRecognition digitalRec;
     Video::VideoProcessor vp;
-    VideoCapture video = vp.openVideo("/opt/RM_tasks/XJTU-RMV-Task04/video/blue.mp4");
-    // "/opt/RM_tasks/XJTU-RMV-Task04/video/blue.mp4"
-    // "/opt/RM_tasks/XJTU-RMV-Task04/video/task04.mp4"
 
     //变量定义
     Mat frame, dilatee, armorPlate;
@@ -64,8 +61,6 @@ int main() {
 
 
 
-
-
 // #include "VideoProcessor.hpp"
 
 // int main()
@@ -77,7 +72,7 @@ int main() {
 //     // "/opt/RM_tasks/XJTU-RMV-Task04/video/task04.mp4"
     
 //     //变量定义
-//     Mat frame, dilatee, armorPlate;;
+//     Mat frame, dilatee, armorPlate;
 //     int armorID=-1;
 //     int count = 0;
 
@@ -96,7 +91,7 @@ int main() {
 
 //         namedWindow("video", WINDOW_FREERATIO);
 //         imshow("video", frame);
-//         if (waitKey(5000000) == 27)  // 按下 'Esc' 键退出
+//         if (waitKey(3000000) == 27)  // 按下 'Esc' 键退出
 //         {
 //             break;
 //         }

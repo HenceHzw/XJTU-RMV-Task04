@@ -47,6 +47,14 @@ namespace Video
         //轮廓检测
         vector<vector<Point>> contours;
         vector<Vec4i> hierarchy;
+
+        // namedWindow("video", WINDOW_FREERATIO);
+        // imshow("video", dilated);
+        // if (waitKey(30) == 27)  // 按下 'Esc' 键退出
+        // {
+            
+        // }
+
         findContours(dilated, contours, hierarchy, RETR_TREE, CHAIN_APPROX_NONE);
 
         //筛选灯条
@@ -153,7 +161,8 @@ namespace Video
                 //*************************************//
                 //            识别装甲板数字             //
                 //*************************************//
-                int armorID = DRObject.matToDigital(frame, ArmorNumRect);
+                float max_prob = 0;
+                int armorID = DRObject.matToDigital(frame, ArmorNumRect, max_prob);
                 // cout<<"leftLight.angle : "<<leftLight.angle<<"     rightLight.angle : "<<rightLight.angle<<endl;
                 // cout<<"L_Angle : "<<L_Angle<<"     R_Angle : "<<R_Angle<<endl;
                 // cout<<"meanAngle : "<<meanAngle<<endl;
@@ -161,22 +170,22 @@ namespace Video
 
                 Point2f vertices[4];
                 ArmorNumRect.points(vertices);
-                std::vector<cv::Point2f> verticesVec(vertices, vertices + 4);
-                //*************************************//
-                //            识别装甲板距离             //
-                //*************************************//
-                DRObject.GetDistance(verticesVec);
+                if(max_prob > 0.75 )
+                {
+                    std::vector<cv::Point2f> verticesVec(vertices, vertices + 4);
+                    //*************************************//
+                    //            识别装甲板距离             //
+                    //*************************************//
+                    DRObject.GetDistance(verticesVec);
 
+                    
+                    for (int i = 0; i < 4; i++) {
+                        line(frame, vertices[i], vertices[(i + 1) % 4], Scalar(0, 0, 255), 2.2);
 
-
-
-
-                
-                for (int i = 0; i < 4; i++) {
-                    line(frame, vertices[i], vertices[(i + 1) % 4], Scalar(0, 0, 255), 2.2);
-
-                    // cout<<"vertices["<<i<<"].x : "<<vertices[i].x<<endl<<"vertices["<<i<<"].y : "<<vertices[i].y<<endl<<endl;
+                        // cout<<"vertices["<<i<<"].x : "<<vertices[i].x<<endl<<"vertices["<<i<<"].y : "<<vertices[i].y<<endl<<endl;
+                    }
                 }
+                
             }
         }
 
@@ -186,15 +195,17 @@ namespace Video
 
 
     //装甲板数字识别
-    int DigitalRecognition::matToDigital(const cv::Mat &frame, RotatedRect &rect) {
-
+    int DigitalRecognition::matToDigital(const cv::Mat &frame, RotatedRect &rect, float &max_prob) {
+        
+        cv::Mat armorPlate_3channels;
         Mat armorPlate = DigitalRecognition::GetArmorImage(frame,rect);
+        cv::cvtColor(armorPlate, armorPlate_3channels, cv::COLOR_GRAY2RGB);
         // 正则化
-        armorPlate.convertTo(armorPlate, CV_32FC1, 1.0f / 255.0f);
+        armorPlate_3channels.convertTo(armorPlate_3channels, CV_32FC1, 1.0f / 255.0f);
 
         // 将 OpenCV 的 Mat 转换为 Tensor, 注意两者的数据格式
         // OpenCV: H*W*C 高度, 宽度, 通道数
-        auto input_tensor = torch::from_blob(armorPlate.data, {1, IMAGE_COLS, IMAGE_ROWS, 1});
+        auto input_tensor = torch::from_blob(armorPlate_3channels.data, {1, IMAGE_COLS, IMAGE_ROWS, 3});
 
         // Tensor: N*C*H*W 数量, 通道数, 高度, 宽度
         // 数字表示顺序
@@ -206,18 +217,19 @@ namespace Video
 
         // 模型计算
         at::Tensor output = module.forward(inputs).toTensor();
-        // std::cout << output.slice(/*dim=*/1, /*start=*/0, /*end=*/7) << '\n';
+        // 对 log_softmax 的输出进行 exp 运算，得到概率
+        at::Tensor probabilities = output.exp();
 
-        // 输出分类的结果
+        // 输出所有类别的概率
+        // std::cout << "各类别的概率分布: " << probabilities << std::endl;
+        auto max_result = probabilities.max(1);
+        at::Tensor max_prob_tensor = std::get<0>(max_result);  // 获取最大概率值
+        max_prob = max_prob_tensor.item<float>();        // 转换为 float 值
 
-        // at::Tensor probabilities = torch::nn::functional::softmax(output, /*dim=*/1);  // 对第 1 维（类别维度）进行 softmax
-        // auto max_result = probabilities.max(1);  // 获取概率中的最大值
-        // torch::Tensor max_values = std::get<0>(max_result);  // 获取最大值
-        // float max_value = max_values.item<float>();
-        // cout << "max_value (probability): " << max_value << endl;
-
-        int ans = output.argmax(1).item().toInt();
-        if(ans <= 5)
+        
+        int ans = probabilities.argmax(1).item().toInt();
+        // std::cout << "当前机器人编号: " << ans << "，最大概率值: " << max_prob << std::endl;
+        if(max_prob > 0.75 && ans <= 5)
         {
             std::cout << "当前机器人编号: " << ans << std::endl;
         }
@@ -271,8 +283,6 @@ namespace Video
     }
 
 
-
-
     double DigitalRecognition::GetDistance(vector<cv::Point2f>& imagePoints)
     {
         double distance = 0;
@@ -315,8 +325,13 @@ namespace Video
             // cout << "Translation Vector (tvec): " << tvec << endl;
 
             // 物体与相机的距离为 tvec 的z轴值，单位为毫米
-            distance = tvec.at<double>(2) / 1000.0; // 转换为米
-            cout << "Distance to object: " << distance*(1.25/0.215) << " meters" << endl;
+            // distance = tvec.at<double>(2) / 1000.0; // 转换为米
+            distance = sqrt(
+                pow(tvec.at<double>(0), 2) + 
+                pow(tvec.at<double>(1), 2) + 
+                pow(tvec.at<double>(2), 2)
+            ) / 1000.0;
+            cout << "Distance to object: " << distance << " meters" << endl;
         } else {
             cout << "PnP calculation failed!" << endl;
         }

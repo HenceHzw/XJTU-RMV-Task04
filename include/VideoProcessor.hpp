@@ -40,11 +40,11 @@ namespace Video
     private:
         torch::jit::script::Module module;
         torch::Device device;
-        const int IMAGE_COLS = 28;
-        const int IMAGE_ROWS = 28;
+        const int IMAGE_COLS = 32;
+        const int IMAGE_ROWS = 32;
     public:
         explicit DigitalRecognition(bool use_cuda = true,
-                                    const std::string &model_path = "/opt/RM_tasks/XJTU-RMV-Task04/model_data/model_script_logits.pt") : device(torch::kCPU) {
+                                    const std::string &model_path = "/opt/RM_tasks/XJTU-RMV-Task04/model_data/SVHN_model_script.pt") : device(torch::kCPU) {
             if ((use_cuda) && (torch::cuda::is_available())) {
                 // std::cout << "CUDA is available! Training on GPU." << std::endl;
                 device = torch::kCUDA;
@@ -53,7 +53,7 @@ namespace Video
         }
 
         //装甲板数字识别
-        int matToDigital(const cv::Mat &img, RotatedRect &rect);
+        int matToDigital(const cv::Mat &img, RotatedRect &rect, float &max_prob);
 
         //截取识别到的装甲板区域
         cv::Mat GetArmorImage(const cv::Mat &img, RotatedRect &rect);
