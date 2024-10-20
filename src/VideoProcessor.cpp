@@ -282,7 +282,7 @@ namespace Video
         return resizedArmorPlate;
     }
 
-
+    // 识别装甲板距离
     double DigitalRecognition::GetDistance(vector<cv::Point2f>& imagePoints)
     {
         double distance = 0;

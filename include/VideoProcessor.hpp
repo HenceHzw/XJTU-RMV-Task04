@@ -57,7 +57,8 @@ namespace Video
 
         //截取识别到的装甲板区域
         cv::Mat GetArmorImage(const cv::Mat &img, RotatedRect &rect);
-
+        
+        // 识别装甲板距离
         double GetDistance(vector<cv::Point2f>& imagePoints);
         
     };
